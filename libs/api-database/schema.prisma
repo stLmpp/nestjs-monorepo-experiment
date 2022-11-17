@@ -1,0 +1,801 @@
+generator client {
+  provider        = "prisma-client-js"
+  previewFeatures = ["multiSchema"]
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DB_CONNECTION_STRING")
+  schemas  = ["forum", "main"]
+}
+
+model category {
+  creationDate                                                         DateTime                @default(now()) @db.Timestamp(6)
+  lastUpdatedDate                                                      DateTime?               @default(now()) @db.Timestamp(6)
+  createdBy                                                            Int
+  lastUpdatedBy                                                        Int?
+  id                                                                   Int                     @id(map: "PK_9c4e4a89e3674fc9f382d733f03") @default(autoincrement())
+  name                                                                 String                  @db.VarChar(100)
+  deletedDate                                                          DateTime?               @db.Timestamp(6)
+  order                                                                Int
+  sub_category                                                         sub_category[]
+  sub_category_transfer_categoryTosub_category_transfer_idCategoryFrom sub_category_transfer[] @relation("categoryTosub_category_transfer_idCategoryFrom")
+  sub_category_transfer_categoryTosub_category_transfer_idCategoryTo   sub_category_transfer[] @relation("categoryTosub_category_transfer_idCategoryTo")
+
+  @@schema("forum")
+}
+
+model moderator {
+  creationDate           DateTime                 @default(now()) @db.Timestamp(6)
+  lastUpdatedDate        DateTime?                @default(now()) @db.Timestamp(6)
+  createdBy              Int
+  lastUpdatedBy          Int?
+  id                     Int                      @id(map: "PK_3c759e446a41418e605c90f15a3") @default(autoincrement())
+  idPlayer               Int                      @unique(map: "UQ_af372a707de12083cc4c4297655")
+  player                 player                   @relation(fields: [idPlayer], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_52f2ae25814fe2dd38d194b0840")
+  sub_category_moderator sub_category_moderator[]
+
+  @@schema("forum")
+}
+
+model post {
+  creationDate    DateTime       @default(now()) @db.Timestamp(6)
+  lastUpdatedDate DateTime?      @default(now()) @db.Timestamp(6)
+  createdBy       Int
+  lastUpdatedBy   Int?
+  id              Int            @id(map: "PK_be5fda3aac270b134ff9c21cdee") @default(autoincrement())
+  idTopic         Int
+  idPlayer        Int
+  deletedDate     DateTime?      @db.Timestamp(6)
+  name            String         @db.VarChar(500)
+  content         String
+  player          player         @relation(fields: [idPlayer], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_ac2dabb76d2761c9481dfd99ab2")
+  topic           topic          @relation(fields: [idTopic], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_eb2f9d4b4bb951942b79c235a97")
+  post_history    post_history[]
+
+  @@schema("forum")
+}
+
+model post_history {
+  creationDate    DateTime  @default(now()) @db.Timestamp(6)
+  lastUpdatedDate DateTime? @default(now()) @db.Timestamp(6)
+  createdBy       Int
+  lastUpdatedBy   Int?
+  id              Int       @id(map: "PK_6dd0832f4c2ac89b2ede9c4d2ea") @default(autoincrement())
+  name            String    @db.VarChar(500)
+  content         String
+  idTopic         Int
+  idPlayer        Int
+  deletedDate     DateTime? @db.Timestamp(6)
+  idPost          Int
+  player          player    @relation(fields: [idPlayer], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_22dc1babff9ae363412f11db2b7")
+  post            post      @relation(fields: [idPost], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_ab36e97ff0f24e76930ddbbcd3e")
+  topic           topic     @relation(fields: [idTopic], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_c5642c559bff90cd8c5cc940497")
+
+  @@schema("forum")
+}
+
+model sub_category {
+  creationDate                                                  DateTime                 @default(now()) @db.Timestamp(6)
+  lastUpdatedDate                                               DateTime?                @default(now()) @db.Timestamp(6)
+  createdBy                                                     Int
+  lastUpdatedBy                                                 Int?
+  id                                                            Int                      @id(map: "PK_59f4461923255f1ce7fc5e7423c") @default(autoincrement())
+  name                                                          String                   @db.VarChar(100)
+  description                                                   String                   @db.VarChar(1000)
+  idCategory                                                    Int
+  deletedDate                                                   DateTime?                @db.Timestamp(6)
+  order                                                         Int
+  category                                                      category                 @relation(fields: [idCategory], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_3b02a87ea001d503813633cdb8d")
+  sub_category_moderator                                        sub_category_moderator[]
+  sub_category_transfer                                         sub_category_transfer[]
+  topic                                                         topic[]
+  topic_transfer_sub_categoryTotopic_transfer_idSubCategoryTo   topic_transfer[]         @relation("sub_categoryTotopic_transfer_idSubCategoryTo")
+  topic_transfer_sub_categoryTotopic_transfer_idSubCategoryFrom topic_transfer[]         @relation("sub_categoryTotopic_transfer_idSubCategoryFrom")
+
+  @@schema("forum")
+}
+
+model sub_category_moderator {
+  creationDate    DateTime     @default(now()) @db.Timestamp(6)
+  lastUpdatedDate DateTime?    @default(now()) @db.Timestamp(6)
+  createdBy       Int
+  lastUpdatedBy   Int?
+  id              Int          @id(map: "PK_2928097c70455a9ea560a43aedd") @default(autoincrement())
+  idModerator     Int
+  idSubCategory   Int
+  sub_category    sub_category @relation(fields: [idSubCategory], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_25191ee8a445c4192498b3da77e")
+  moderator       moderator    @relation(fields: [idModerator], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_fc47a1bdecac9fd1c61ba7f18ce")
+
+  @@unique([idModerator, idSubCategory], map: "UQ_20634809b6b4747a488dd677f9b")
+  @@schema("forum")
+}
+
+model sub_category_transfer {
+  creationDate                                            DateTime     @default(now()) @db.Timestamp(6)
+  lastUpdatedDate                                         DateTime?    @default(now()) @db.Timestamp(6)
+  createdBy                                               Int
+  lastUpdatedBy                                           Int?
+  id                                                      Int          @id(map: "PK_08bfc9d7381be0d2e3faf41cdf6") @default(autoincrement())
+  idSubCategory                                           Int
+  idCategoryFrom                                          Int
+  idCategoryTo                                            Int
+  sub_category                                            sub_category @relation(fields: [idSubCategory], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_34e1c0842888946b8f2fd00a745")
+  category_categoryTosub_category_transfer_idCategoryFrom category     @relation("categoryTosub_category_transfer_idCategoryFrom", fields: [idCategoryFrom], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_529bc2324edf10db6f3a3d45350")
+  category_categoryTosub_category_transfer_idCategoryTo   category     @relation("categoryTosub_category_transfer_idCategoryTo", fields: [idCategoryTo], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_9363f8c172683445945632e3e99")
+
+  @@schema("forum")
+}
+
+model topic {
+  creationDate           DateTime                 @default(now()) @db.Timestamp(6)
+  lastUpdatedDate        DateTime?                @default(now()) @db.Timestamp(6)
+  createdBy              Int
+  lastUpdatedBy          Int?
+  id                     Int                      @id(map: "PK_33aa4ecb4e4f20aa0157ea7ef61") @default(autoincrement())
+  name                   String                   @db.VarChar(150)
+  idSubCategory          Int
+  idScore                Int?
+  views                  Int
+  pinned                 Boolean                  @default(false)
+  lockedDate             DateTime?                @db.Timestamp(6)
+  idPlayer               Int
+  deletedDate            DateTime?                @db.Timestamp(6)
+  sub_category           sub_category             @relation(fields: [idSubCategory], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_4632d144b285a96786d13b94685")
+  player                 player                   @relation(fields: [idPlayer], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_cc3a1a532a408520b0677f80675")
+  score                  score?                   @relation(fields: [idScore], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_e76121f21d765186444514c432e")
+  post                   post[]
+  post_history           post_history[]
+  topic_player_last_read topic_player_last_read[]
+  topic_player_settings  topic_player_settings[]
+  topic_transfer         topic_transfer[]
+
+  @@schema("forum")
+}
+
+model topic_player_last_read {
+  creationDate    DateTime  @default(now()) @db.Timestamp(6)
+  lastUpdatedDate DateTime? @default(now()) @db.Timestamp(6)
+  createdBy       Int
+  lastUpdatedBy   Int?
+  id              Int       @id(map: "PK_5907829781063adcecb1af0aaa7") @default(autoincrement())
+  idPlayer        Int
+  idTopic         Int
+  readDate        DateTime  @db.Timestamp(6)
+  topic           topic     @relation(fields: [idTopic], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_6061c3bcc9de747da9296f4d54c")
+  player          player    @relation(fields: [idPlayer], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_a0f975ca10b2980272df66ee0bd")
+
+  @@unique([idPlayer, idTopic], map: "UQ_c53441ad20e3f730c326b985506")
+  @@schema("forum")
+}
+
+model topic_player_settings {
+  creationDate    DateTime  @default(now()) @db.Timestamp(6)
+  lastUpdatedDate DateTime? @default(now()) @db.Timestamp(6)
+  createdBy       Int
+  lastUpdatedBy   Int?
+  id              Int       @id(map: "PK_d402507c0d90dc0eab5d8624050") @default(autoincrement())
+  idTopic         Int
+  idPlayer        Int
+  notifications   Boolean
+  player          player    @relation(fields: [idPlayer], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_50dd7b1419a733e8c352a80e0d5")
+  topic           topic     @relation(fields: [idTopic], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_9c9443082f18bc80a81ada20a14")
+
+  @@unique([idTopic, idPlayer], map: "UQ_a329bf9223102b752c148397d54")
+  @@schema("forum")
+}
+
+model topic_transfer {
+  creationDate                                                DateTime     @default(now()) @db.Timestamp(6)
+  lastUpdatedDate                                             DateTime?    @default(now()) @db.Timestamp(6)
+  createdBy                                                   Int
+  lastUpdatedBy                                               Int?
+  id                                                          Int          @id(map: "PK_08ca654fa6c06e5e4eee8594ce5") @default(autoincrement())
+  idTopic                                                     Int
+  idSubCategoryFrom                                           Int
+  idSubCategoryTo                                             Int
+  sub_category_sub_categoryTotopic_transfer_idSubCategoryTo   sub_category @relation("sub_categoryTotopic_transfer_idSubCategoryTo", fields: [idSubCategoryTo], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_044ed180f400514632147f9ed55")
+  sub_category_sub_categoryTotopic_transfer_idSubCategoryFrom sub_category @relation("sub_categoryTotopic_transfer_idSubCategoryFrom", fields: [idSubCategoryFrom], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_5a06769a70851ec4e16c112856a")
+  topic                                                       topic        @relation(fields: [idTopic], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_877569ff5714c05318c37b1ce66")
+
+  @@schema("forum")
+}
+
+model auth_confirmation {
+  id                                                     Int       @id(map: "PK_64382720d34fc83b03e198f3049") @default(autoincrement())
+  creationDate                                           DateTime  @default(now()) @db.Timestamp(6)
+  lastUpdatedDate                                        DateTime? @default(now()) @db.Timestamp(6)
+  createdBy                                              Int
+  lastUpdatedBy                                          Int?
+  code                                                   Int
+  expirationDate                                         DateTime  @db.Timestamp(6)
+  confirmationDate                                       DateTime? @db.Timestamp(6)
+  idUser                                                 Int
+  user_auth_confirmation_idUserTouser                    user      @relation("auth_confirmation_idUserTouser", fields: [idUser], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_d129f4913723f6d8f14c3e9c4ac")
+  user_auth_confirmationTouser_idCurrentAuthConfirmation user?     @relation("auth_confirmationTouser_idCurrentAuthConfirmation")
+
+  @@schema("main")
+}
+
+model character {
+  id                Int                 @id(map: "PK_6c4aec48c564968be15078b8ae5") @default(autoincrement())
+  creationDate      DateTime            @default(now()) @db.Timestamp(6)
+  lastUpdatedDate   DateTime?           @default(now()) @db.Timestamp(6)
+  createdBy         Int
+  lastUpdatedBy     Int?
+  name              String              @db.VarChar
+  character_costume character_costume[]
+
+  @@index([name], map: "IDX_d80158dde1461b74ed8499e7d8")
+  @@schema("main")
+}
+
+model character_costume {
+  id                                             Int                                              @id(map: "PK_79c2276007f63d29c2e16ee1cbb") @default(autoincrement())
+  creationDate                                   DateTime                                         @default(now()) @db.Timestamp(6)
+  lastUpdatedDate                                DateTime?                                        @default(now()) @db.Timestamp(6)
+  createdBy                                      Int
+  lastUpdatedBy                                  Int?
+  idCharacter                                    Int
+  name                                           String                                           @db.VarChar
+  shortName                                      String                                           @db.VarChar(15)
+  character                                      character                                        @relation(fields: [idCharacter], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_d16683fb0550d617778979b29a6")
+  platform_game_mini_game_mode_character_costume platform_game_mini_game_mode_character_costume[]
+
+  @@index([shortName], map: "IDX_00bb7c711ff4189090801224e4")
+  @@index([name], map: "IDX_80071a3e68f6f585127b9dc73c")
+  @@schema("main")
+}
+
+model error {
+  creationDate    DateTime  @default(now()) @db.Timestamp(6)
+  lastUpdatedDate DateTime? @default(now()) @db.Timestamp(6)
+  createdBy       Int
+  lastUpdatedBy   Int?
+  id              Int       @id(map: "PK_cd77c9331f0ee047b819a7abad1") @default(autoincrement())
+  name            String    @db.VarChar
+  message         String    @db.VarChar
+  stack           String
+  sqlCode         String?   @db.VarChar
+  sqlHint         String?   @db.VarChar
+  sqlQuery        String?
+  sqlParameters   Json?     @db.Json
+
+  @@schema("main")
+}
+
+model game {
+  id              Int              @id(map: "PK_352a30652cd352f552fef73dec5") @default(autoincrement())
+  creationDate    DateTime         @default(now()) @db.Timestamp(6)
+  lastUpdatedDate DateTime?        @default(now()) @db.Timestamp(6)
+  createdBy       Int
+  lastUpdatedBy   Int?
+  name            String           @db.VarChar
+  shortName       String           @db.VarChar(10)
+  game_mini_game  game_mini_game[]
+
+  @@index([name], map: "IDX_5d1e08e04b97aa06d671cd5840")
+  @@index([shortName], map: "IDX_9cf39b223f4b2b4eb21978863d")
+  @@schema("main")
+}
+
+model game_mini_game {
+  id                      Int                       @id(map: "PK_e03497ec8216b6db2412a7f22f2") @default(autoincrement())
+  creationDate            DateTime                  @default(now()) @db.Timestamp(6)
+  lastUpdatedDate         DateTime?                 @default(now()) @db.Timestamp(6)
+  createdBy               Int
+  lastUpdatedBy           Int?
+  idGame                  Int
+  idMiniGame              Int
+  game                    game                      @relation(fields: [idGame], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_76931ed13d3bfbcf7c7a2b5ca8e")
+  mini_game               mini_game                 @relation(fields: [idMiniGame], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_cc7250b59f9c797b18aa00c45cb")
+  platform_game_mini_game platform_game_mini_game[]
+
+  @@unique([idGame, idMiniGame], map: "UQ_f15c4cf3f2a631df6309458a88f")
+  @@schema("main")
+}
+
+model input_type {
+  creationDate        DateTime              @default(now()) @db.Timestamp(6)
+  lastUpdatedDate     DateTime?             @default(now()) @db.Timestamp(6)
+  createdBy           Int
+  lastUpdatedBy       Int?
+  id                  Int                   @id(map: "PK_44bfcb298397df7f65acffa0532") @default(autoincrement())
+  name                String                @db.VarChar
+  platform_input_type platform_input_type[]
+  player              player[]
+
+  @@schema("main")
+}
+
+model mail_queue {
+  creationDate    DateTime                      @default(now()) @db.Timestamp(6)
+  lastUpdatedDate DateTime?                     @default(now()) @db.Timestamp(6)
+  createdBy       Int
+  lastUpdatedBy   Int?
+  id              Int                           @id(map: "PK_fc59283e1a31da3ce216089305b") @default(autoincrement())
+  template        String                        @db.VarChar
+  context         Json                          @db.Json
+  from            String                        @db.VarChar
+  to              String[]                      @db.VarChar
+  cc              String[]                      @db.VarChar
+  bcc             String[]                      @db.VarChar
+  replyTo         String?                       @db.VarChar
+  inReplyTo       String?                       @db.VarChar
+  subject         String?                       @db.VarChar
+  text            String?                       @db.VarChar
+  html            String?                       @db.VarChar
+  sender          String?                       @db.VarChar
+  raw             String?                       @db.VarChar
+  textEncoding    mail_queue_textencoding_enum?
+  references      String?                       @db.VarChar
+  encoding        String?                       @db.VarChar
+  date            DateTime?                     @db.Timestamp(6)
+  transporterName String?                       @db.VarChar
+
+  @@schema("main")
+}
+
+model mini_game {
+  id              Int              @id(map: "PK_85c6da5ff6993956153cf04b10a") @default(autoincrement())
+  creationDate    DateTime         @default(now()) @db.Timestamp(6)
+  lastUpdatedDate DateTime?        @default(now()) @db.Timestamp(6)
+  createdBy       Int
+  lastUpdatedBy   Int?
+  name            String           @db.VarChar
+  game_mini_game  game_mini_game[]
+
+  @@index([name], map: "IDX_dcead769fe71a7e8905c89fdf5")
+  @@schema("main")
+}
+
+model mode {
+  id                           Int                            @id(map: "PK_ca852cfca8f2fe91ee9daa47ec6") @default(autoincrement())
+  creationDate                 DateTime                       @default(now()) @db.Timestamp(6)
+  lastUpdatedDate              DateTime?                      @default(now()) @db.Timestamp(6)
+  createdBy                    Int
+  lastUpdatedBy                Int?
+  name                         String                         @db.VarChar
+  playerQuantity               Int
+  platform_game_mini_game_mode platform_game_mini_game_mode[]
+
+  @@index([name], map: "IDX_6b2cb7f89d46fd760279936e30")
+  @@schema("main")
+}
+
+model notification {
+  creationDate       DateTime           @default(now()) @db.Timestamp(6)
+  lastUpdatedDate    DateTime?          @default(now()) @db.Timestamp(6)
+  createdBy          Int
+  lastUpdatedBy      Int?
+  id                 Int                @id(map: "PK_705b6c7cdf9b2c2ff7ac7872cb7") @default(autoincrement())
+  content            String
+  idUser             Int
+  read               Boolean            @default(false)
+  idNotificationType Int?
+  seen               Boolean            @default(false)
+  deletedDate        DateTime?          @db.Timestamp(6)
+  extra              Json?              @db.Json
+  user               user               @relation(fields: [idUser], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_c760ca4f1364520c0b595270d1d")
+  notification_type  notification_type? @relation(fields: [idNotificationType], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_f9f312692d1ccb4872f44721ae8")
+
+  @@schema("main")
+}
+
+model notification_type {
+  creationDate    DateTime       @default(now()) @db.Timestamp(6)
+  lastUpdatedDate DateTime?      @default(now()) @db.Timestamp(6)
+  createdBy       Int
+  lastUpdatedBy   Int?
+  id              Int            @id(map: "PK_3e0e1fa68c25d84f808ca11dbaa") @default(autoincrement())
+  content         String
+  notification    notification[]
+
+  @@schema("main")
+}
+
+model platform {
+  id                      Int                       @id(map: "PK_c33d6abeebd214bd2850bfd6b8e") @default(autoincrement())
+  creationDate            DateTime                  @default(now()) @db.Timestamp(6)
+  lastUpdatedDate         DateTime?                 @default(now()) @db.Timestamp(6)
+  createdBy               Int
+  lastUpdatedBy           Int?
+  name                    String                    @db.VarChar
+  shortName               String                    @db.VarChar(10)
+  platform_game_mini_game platform_game_mini_game[]
+  platform_input_type     platform_input_type[]
+
+  @@index([name], map: "IDX_b9b57ec16b9c2ac927aa62b8b3")
+  @@index([shortName], map: "IDX_bb9295defd618944c5a554466f")
+  @@schema("main")
+}
+
+model platform_game_mini_game {
+  id                           Int                            @id(map: "PK_a9f40bbd393602e6d928b7784ba") @default(autoincrement())
+  creationDate                 DateTime                       @default(now()) @db.Timestamp(6)
+  lastUpdatedDate              DateTime?                      @default(now()) @db.Timestamp(6)
+  createdBy                    Int
+  lastUpdatedBy                Int?
+  idPlatform                   Int
+  idGameMiniGame               Int
+  game_mini_game               game_mini_game                 @relation(fields: [idGameMiniGame], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_6b525d6209ce50ecf9b69366cd6")
+  platform                     platform                       @relation(fields: [idPlatform], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_a5bc01acbee93e56dbae259a4cb")
+  platform_game_mini_game_mode platform_game_mini_game_mode[]
+
+  @@unique([idPlatform, idGameMiniGame], map: "UQ_be52f427500263b7a8cf7f5a110")
+  @@schema("main")
+}
+
+model platform_game_mini_game_mode {
+  id                                             Int                                              @id(map: "PK_342d6cfeadc4a3c01a109542761") @default(autoincrement())
+  creationDate                                   DateTime                                         @default(now()) @db.Timestamp(6)
+  lastUpdatedDate                                DateTime?                                        @default(now()) @db.Timestamp(6)
+  createdBy                                      Int
+  lastUpdatedBy                                  Int?
+  idPlatformGameMiniGame                         Int
+  idMode                                         Int
+  platform_game_mini_game                        platform_game_mini_game                          @relation(fields: [idPlatformGameMiniGame], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_59e416b906be9ceee0e96451b2f")
+  mode                                           mode                                             @relation(fields: [idMode], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_ad4af4a1c43ca2186d4b95d77b2")
+  platform_game_mini_game_mode_character_costume platform_game_mini_game_mode_character_costume[]
+  platform_game_mini_game_mode_stage             platform_game_mini_game_mode_stage[]
+
+  @@unique([idPlatformGameMiniGame, idMode], map: "UQ_e9c568eb40fecdd0730036374c4")
+  @@schema("main")
+}
+
+model platform_game_mini_game_mode_character_costume {
+  id                           Int                            @id(map: "PK_e13dcaa1f031b0564faf7070607") @default(autoincrement())
+  creationDate                 DateTime                       @default(now()) @db.Timestamp(6)
+  lastUpdatedDate              DateTime?                      @default(now()) @db.Timestamp(6)
+  createdBy                    Int
+  lastUpdatedBy                Int?
+  idPlatformGameMiniGameMode   Int
+  idCharacterCostume           Int
+  platform_game_mini_game_mode platform_game_mini_game_mode   @relation(fields: [idPlatformGameMiniGameMode], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_4741c38d264d234f356c9046780")
+  character_costume            character_costume              @relation(fields: [idCharacterCostume], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_4e9145c1c154320c9ece0de586c")
+  score_player                 score_player[]
+  score_world_record_character score_world_record_character[]
+
+  @@unique([idPlatformGameMiniGameMode, idCharacterCostume], map: "UQ_45f02464425b677ec32953d6aef")
+  @@schema("main")
+}
+
+model platform_game_mini_game_mode_stage {
+  id                           Int                          @id(map: "PK_b947f7cf85b8e39e6d157115120") @default(autoincrement())
+  creationDate                 DateTime                     @default(now()) @db.Timestamp(6)
+  lastUpdatedDate              DateTime?                    @default(now()) @db.Timestamp(6)
+  createdBy                    Int
+  lastUpdatedBy                Int?
+  idPlatformGameMiniGameMode   Int
+  idStage                      Int
+  stage                        stage                        @relation(fields: [idStage], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_245a93a6cd7cec049e61747032d")
+  platform_game_mini_game_mode platform_game_mini_game_mode @relation(fields: [idPlatformGameMiniGameMode], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_8c476e402d8aa275a2822790068")
+  score                        score[]
+  score_world_record           score_world_record[]
+
+  @@unique([idPlatformGameMiniGameMode, idStage], map: "UQ_2bf93d373b38cbfa97e77a03649")
+  @@schema("main")
+}
+
+model platform_input_type {
+  creationDate    DateTime       @default(now()) @db.Timestamp(6)
+  lastUpdatedDate DateTime?      @default(now()) @db.Timestamp(6)
+  createdBy       Int
+  lastUpdatedBy   Int?
+  id              Int            @id(map: "PK_a3d9d9b01bea7aa1aebcde55452") @default(autoincrement())
+  idInputType     Int
+  idPlatform      Int
+  input_type      input_type     @relation(fields: [idInputType], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_450a95e1a4500bd4fb5086c5ad0")
+  platform        platform       @relation(fields: [idPlatform], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_f05bc66a92ccfd5f766b9c0503c")
+  score_player    score_player[]
+
+  @@unique([idInputType, idPlatform], map: "UQ_dd07f8f9e849818e67cc5ec9dee")
+  @@schema("main")
+}
+
+model player {
+  id                         Int                      @id(map: "PK_65edadc946a7faf4b638d5e8885") @default(autoincrement())
+  creationDate               DateTime                 @default(now()) @db.Timestamp(6)
+  lastUpdatedDate            DateTime?                @default(now()) @db.Timestamp(6)
+  createdBy                  Int
+  lastUpdatedBy              Int?
+  idUser                     Int?                     @unique(map: "REL_88caf770bdc2cc708e5930f12c")
+  idSteamProfile             Int?                     @unique(map: "REL_d8e79b0d9f7f0698404bdce07e")
+  noUser                     Boolean                  @default(false)
+  idRegion                   Int
+  lastUpdatedPersonaNameDate DateTime?                @db.Timestamp(6)
+  personaName                String                   @unique(map: "UQ_2cc68df9fcd52298ba2d522dea9") @db.VarChar(100)
+  title                      String?                  @db.VarChar(250)
+  aboutMe                    String?                  @db.VarChar(2000)
+  idInputType                Int?
+  avatar                     String?                  @db.VarChar
+  input_type                 input_type?              @relation(fields: [idInputType], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_40c3ca1bbdca3a848268576938d")
+  region                     region                   @relation(fields: [idRegion], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_63d2eb3e0376495283cb45a511e")
+  steam_profile              steam_profile?           @relation(fields: [idSteamProfile], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_6bca1d865c497a4417f7a812e40")
+  user                       user?                    @relation(fields: [idUser], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_cf0cf42ae7ee371cac3c0176716")
+  moderator                  moderator?
+  post                       post[]
+  post_history               post_history[]
+  topic                      topic[]
+  topic_player_last_read     topic_player_last_read[]
+  topic_player_settings      topic_player_settings[]
+  score                      score[]
+  score_approval             score_approval[]
+  score_player               score_player[]
+
+  @@schema("main")
+}
+
+model region {
+  id              Int       @id(map: "PK_5f48ffc3af96bc486f5f3f3a6da") @default(autoincrement())
+  creationDate    DateTime  @default(now()) @db.Timestamp(6)
+  lastUpdatedDate DateTime? @default(now()) @db.Timestamp(6)
+  createdBy       Int
+  lastUpdatedBy   Int?
+  name            String    @db.VarChar
+  shortName       String    @db.VarChar(10)
+  player          player[]
+
+  @@schema("main")
+}
+
+model rule {
+  creationDate    DateTime       @default(now()) @db.Timestamp(6)
+  lastUpdatedDate DateTime?      @default(now()) @db.Timestamp(6)
+  createdBy       Int
+  lastUpdatedBy   Int?
+  id              Int            @id(map: "PK_a5577f464213af7ffbe866e3cb5") @default(autoincrement())
+  description     String         @db.VarChar
+  order           Int
+  type            rule_type_enum @default(Main)
+
+  @@schema("main")
+}
+
+model score {
+  id                                 Int                                @id(map: "PK_1770f42c61451103f5514134078") @default(autoincrement())
+  creationDate                       DateTime                           @default(now()) @db.Timestamp(6)
+  lastUpdatedDate                    DateTime?                          @default(now()) @db.Timestamp(6)
+  createdBy                          Int
+  lastUpdatedBy                      Int?
+  idPlatformGameMiniGameModeStage    Int
+  score                              Int
+  maxCombo                           Int
+  time                               String                             @db.VarChar(8)
+  createdByIdPlayer                  Int
+  approvalDate                       DateTime?                          @db.Timestamp(6)
+  idScoreStatus                      Int
+  achievedDate                       DateTime?                          @db.Timestamp(6)
+  player                             player                             @relation(fields: [createdByIdPlayer], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_319d7141a1fad36a26b3babe01e")
+  score_status                       score_status                       @relation(fields: [idScoreStatus], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_8964b25e43cf798edfa2a1a462f")
+  platform_game_mini_game_mode_stage platform_game_mini_game_mode_stage @relation(fields: [idPlatformGameMiniGameModeStage], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_fcdd4ec80dda23fa79093a93312")
+  topic                              topic[]
+  score_approval                     score_approval[]
+  score_change_request               score_change_request[]
+  score_player                       score_player[]
+  score_world_record                 score_world_record[]
+
+  @@schema("main")
+}
+
+model score_approval {
+  id                    Int                        @id(map: "PK_17ff86798702c77fe4a6d541f8b") @default(autoincrement())
+  creationDate          DateTime                   @default(now()) @db.Timestamp(6)
+  lastUpdatedDate       DateTime?                  @default(now()) @db.Timestamp(6)
+  createdBy             Int
+  lastUpdatedBy         Int?
+  idScore               Int
+  actionDate            DateTime                   @db.Timestamp(6)
+  actionByPlayer        Int?
+  actionByAdmin         Int?
+  description           String?                    @db.VarChar(1000)
+  action                score_approval_action_enum
+  idScoreApprovalMotive Int
+  player                player?                    @relation(fields: [actionByPlayer], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_2d388a480ea75fbdb9539f2681d")
+  score_approval_motive score_approval_motive      @relation(fields: [idScoreApprovalMotive], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_2f2aad512ba58a11f2f6e1d4bc7")
+  user                  user?                      @relation(fields: [actionByAdmin], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_2f5bfe6dd3b90f27717e989f89e")
+  score                 score                      @relation(fields: [idScore], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_5bb0a9e1938c51f6677e4b016e7")
+
+  @@schema("main")
+}
+
+model score_approval_motive {
+  id              Int                               @id(map: "PK_96c552f173fcf22f32e4528f4b0") @default(autoincrement())
+  creationDate    DateTime                          @default(now()) @db.Timestamp(6)
+  lastUpdatedDate DateTime?                         @default(now()) @db.Timestamp(6)
+  createdBy       Int
+  lastUpdatedBy   Int?
+  description     String                            @db.VarChar
+  action          score_approval_motive_action_enum
+  score_approval  score_approval[]
+
+  @@schema("main")
+}
+
+model score_change_request {
+  id              Int       @id(map: "PK_76805bfa90f4ff152dcf655d390") @default(autoincrement())
+  creationDate    DateTime  @default(now()) @db.Timestamp(6)
+  lastUpdatedDate DateTime? @default(now()) @db.Timestamp(6)
+  createdBy       Int
+  lastUpdatedBy   Int?
+  idScore         Int
+  description     String    @db.VarChar(1000)
+  dateFulfilled   DateTime? @db.Timestamp(6)
+  score           score     @relation(fields: [idScore], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_66104643724acebcf6af7aa8a14")
+
+  @@schema("main")
+}
+
+model score_player {
+  id                                             Int                                            @id(map: "PK_b3cfd86ca34c6118628491c5b16") @default(autoincrement())
+  creationDate                                   DateTime                                       @default(now()) @db.Timestamp(6)
+  lastUpdatedDate                                DateTime?                                      @default(now()) @db.Timestamp(6)
+  createdBy                                      Int
+  lastUpdatedBy                                  Int?
+  idScore                                        Int
+  idPlayer                                       Int
+  idPlatformGameMiniGameModeCharacterCostume     Int
+  host                                           Boolean                                        @default(false)
+  bulletKills                                    Int?
+  description                                    String?                                        @db.VarChar(1000)
+  evidence                                       String                                         @db.VarChar(1000)
+  idPlatformInputType                            Int?
+  platform_input_type                            platform_input_type?                           @relation(fields: [idPlatformInputType], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_344f0514834b40f647da7989b81")
+  player                                         player                                         @relation(fields: [idPlayer], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_752cce38f5606cd3967a7b5d799")
+  platform_game_mini_game_mode_character_costume platform_game_mini_game_mode_character_costume @relation(fields: [idPlatformGameMiniGameModeCharacterCostume], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_d7116ad671486cadb831a894b91")
+  score                                          score                                          @relation(fields: [idScore], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_efa67e7ff29fc029a57f585265c")
+
+  @@index([idScore], map: "IDX_a5d58251e544f2be7262f88300")
+  @@schema("main")
+}
+
+model score_status {
+  id              Int       @id(map: "PK_8271f9f4e765566dbdf8b133e25") @default(autoincrement())
+  creationDate    DateTime  @default(now()) @db.Timestamp(6)
+  lastUpdatedDate DateTime? @default(now()) @db.Timestamp(6)
+  createdBy       Int
+  lastUpdatedBy   Int?
+  description     String    @db.VarChar
+  score           score[]
+
+  @@schema("main")
+}
+
+model score_world_record {
+  id                                 Int                                @id(map: "PK_d13479ff708d3504f43cd1777a0") @default(autoincrement())
+  creationDate                       DateTime                           @default(now()) @db.Timestamp(6)
+  lastUpdatedDate                    DateTime?                          @default(now()) @db.Timestamp(6)
+  createdBy                          Int
+  lastUpdatedBy                      Int?
+  idScore                            Int
+  type                               score_world_record_type_enum
+  idPlatformGameMiniGameModeStage    Int
+  endDate                            DateTime?                          @db.Timestamp(6)
+  score                              score                              @relation(fields: [idScore], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_6c5fa9569e1b43b29d780d524f5")
+  platform_game_mini_game_mode_stage platform_game_mini_game_mode_stage @relation(fields: [idPlatformGameMiniGameModeStage], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_ee1b7e2597c8cf1a029618c64f1")
+  score_world_record_character       score_world_record_character[]
+
+  @@schema("main")
+}
+
+model score_world_record_character {
+  id                                             Int                                            @id(map: "PK_d16a3b201c7780ce1fdef252e90") @default(autoincrement())
+  creationDate                                   DateTime                                       @default(now()) @db.Timestamp(6)
+  lastUpdatedDate                                DateTime?                                      @default(now()) @db.Timestamp(6)
+  createdBy                                      Int
+  lastUpdatedBy                                  Int?
+  idScoreWorldRecord                             Int
+  idPlatformGameMiniGameModeCharacterCostume     Int
+  platform_game_mini_game_mode_character_costume platform_game_mini_game_mode_character_costume @relation(fields: [idPlatformGameMiniGameModeCharacterCostume], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_89aae9bccfe0579e1c826a5bd36")
+  score_world_record                             score_world_record                             @relation(fields: [idScoreWorldRecord], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_ba7b8b3a692bcc8ccff0829de3f")
+
+  @@index([idScoreWorldRecord], map: "IDX_980e55d01c0383636d21da3ddc")
+  @@schema("main")
+}
+
+model stage {
+  id                                 Int                                  @id(map: "PK_c54d11b3c24a188262844af1612") @default(autoincrement())
+  creationDate                       DateTime                             @default(now()) @db.Timestamp(6)
+  lastUpdatedDate                    DateTime?                            @default(now()) @db.Timestamp(6)
+  createdBy                          Int
+  lastUpdatedBy                      Int?
+  name                               String                               @db.VarChar
+  shortName                          String                               @db.VarChar(10)
+  platform_game_mini_game_mode_stage platform_game_mini_game_mode_stage[]
+
+  @@index([shortName], map: "IDX_10441b2716f7fc77c6bded3d0d")
+  @@index([name], map: "IDX_cbeb0a0f411c8b0879565811d0")
+  @@schema("main")
+}
+
+model steam_profile {
+  id                       Int       @id(map: "PK_bdd6986034016986efaf1d5e00d") @default(autoincrement())
+  creationDate             DateTime  @default(now()) @db.Timestamp(6)
+  lastUpdatedDate          DateTime? @default(now()) @db.Timestamp(6)
+  createdBy                Int
+  lastUpdatedBy            Int?
+  steamid                  String    @unique(map: "UQ_f139fad0e1610c0545b905a98cf") @db.VarChar
+  communityvisibilitystate Int
+  profilestate             Int
+  personaname              String    @db.VarChar
+  profileurl               String    @db.VarChar
+  avatar                   String    @db.VarChar
+  avatarmedium             String    @db.VarChar
+  avatarfull               String    @db.VarChar
+  avatarhash               String    @db.VarChar
+  lastlogoff               Int?
+  personastate             Int
+  realname                 String?   @db.VarChar
+  primaryclanid            String?   @db.VarChar
+  timecreated              Int?
+  personastateflags        Int
+  gameextrainfo            String?   @db.VarChar
+  loccountrycode           String?   @db.VarChar
+  gameid                   String?   @db.VarChar
+  player                   player?
+
+  @@schema("main")
+}
+
+model user {
+  id                                                                  Int                 @id(map: "PK_cace4a159ff9f2512dd42373760") @default(autoincrement())
+  creationDate                                                        DateTime            @default(now()) @db.Timestamp(6)
+  lastUpdatedDate                                                     DateTime?           @default(now()) @db.Timestamp(6)
+  createdBy                                                           Int
+  lastUpdatedBy                                                       Int?
+  password                                                            String              @db.VarChar
+  salt                                                                String              @db.VarChar
+  email                                                               String              @unique(map: "UQ_e12875dfb3b1d92d7d7c5377e22") @db.VarChar
+  lastOnline                                                          DateTime?           @db.Timestamp(6)
+  rememberMe                                                          Boolean?
+  admin                                                               Boolean             @default(false)
+  idCurrentAuthConfirmation                                           Int?                @unique(map: "REL_d853a9355d891f6ddbcf9889f3")
+  dateFormat                                                          String              @default("dd/MM/yyyy") @db.VarChar
+  bannedDate                                                          DateTime?           @db.Timestamp(6)
+  owner                                                               Boolean             @default(false)
+  lockedDate                                                          DateTime?           @db.Timestamp(6)
+  username                                                            String              @unique(map: "UQ_78a916df40e02a9deb1c4b75edb") @db.VarChar(100)
+  auth_confirmation_auth_confirmationTouser_idCurrentAuthConfirmation auth_confirmation?  @relation("auth_confirmationTouser_idCurrentAuthConfirmation", fields: [idCurrentAuthConfirmation], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_3a049e28fbc10499c1739843ea8")
+  auth_confirmation_auth_confirmation_idUserTouser                    auth_confirmation[] @relation("auth_confirmation_idUserTouser")
+  notification                                                        notification[]
+  player                                                              player?
+  score_approval                                                      score_approval[]
+
+  @@schema("main")
+}
+
+enum mail_queue_textencoding_enum {
+  quoted_printable @map("quoted-printable")
+  base64
+
+  @@schema("main")
+}
+
+enum rule_type_enum {
+  Main
+  Forum
+
+  @@schema("main")
+}
+
+enum score_approval_action_enum {
+  Approve
+  Reject
+
+  @@schema("main")
+}
+
+enum score_approval_motive_action_enum {
+  Approve
+  Reject
+
+  @@schema("main")
+}
+
+enum score_world_record_type_enum {
+  World_Record             @map("World Record")
+  Character_World_Record   @map("Character World Record")
+  Combination_World_Record @map("Combination World Record")
+
+  @@schema("main")
+}

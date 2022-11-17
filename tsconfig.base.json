@@ -1,0 +1,28 @@
+{
+  "compileOnSave": false,
+  "compilerOptions": {
+    "rootDir": ".",
+    "sourceMap": true,
+    "declaration": false,
+    "moduleResolution": "node",
+    "emitDecoratorMetadata": true,
+    "experimentalDecorators": true,
+    "importHelpers": true,
+    "target": "es2015",
+    "module": "esnext",
+    "lib": ["es2017", "dom"],
+    "skipLibCheck": true,
+    "skipDefaultLibCheck": true,
+    "baseUrl": ".",
+    "paths": {
+      "@nest-ms-test/api-core": ["libs/api-core/src/index.ts"],
+      "@nest-ms-test/api-database": ["libs/api-database/src/index.ts"],
+      "@nest-ms-test/common": ["libs/common/src/index.ts"]
+    },
+    "esModuleInterop": true,
+    "strict": true,
+    "noImplicitOverride": true,
+    "strictNullChecks": true
+  },
+  "exclude": ["node_modules", "tmp"]
+}
