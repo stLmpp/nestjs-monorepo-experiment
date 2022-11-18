@@ -1,8 +1,9 @@
 import { Logger } from '@nestjs/common';
 
 import { AppModule } from './app/app.module';
+import { Environment } from './app/environment';
 
-import { createApi, Environment } from '@nest-ms-test/api-core';
+import { createApi } from '@nest-ms-test/api-core';
 
 const { api, init } = createApi({
   module: AppModule,

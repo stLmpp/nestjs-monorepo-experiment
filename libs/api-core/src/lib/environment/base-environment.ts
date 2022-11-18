@@ -13,8 +13,8 @@ function findEnvVar(names: string[]): string | undefined {
   }
 }
 
-export class Environment {
-  private constructor() {
+export abstract class BaseEnvironment {
+  protected constructor() {
     if (process.env.NODE_ENV !== 'production') {
       config();
     }
@@ -29,6 +29,7 @@ export class Environment {
       } else {
         missingVariables.push(metadata.names.join('/'));
       }
+
       (this as Record<string, unknown>)[metadata.propertyKey] = value;
     }
     if (missingVariables.length) {
@@ -41,9 +42,5 @@ export class Environment {
   }
 
   @EnvProp() nodeEnv!: string;
-  @EnvProp() dbConnectionString!: string;
-
   production: boolean;
-
-  static readonly instance = new Environment();
 }

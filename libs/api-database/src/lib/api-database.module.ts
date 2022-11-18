@@ -3,12 +3,12 @@ import { PrismaModule, PrismaService } from 'nestjs-prisma';
 
 @Module({
   imports: [
-    PrismaModule.forRoot({
-      prismaServiceOptions: {
+    PrismaModule.forRootAsync({
+      useFactory: () => ({
         prismaOptions: {
           log: [{ emit: 'event', level: 'query' }],
         },
-      },
+      }),
     }),
   ],
   exports: [PrismaModule],

@@ -1,9 +1,20 @@
-import { Module } from '@nestjs/common';
+import { DynamicModule, Module, Type } from '@nestjs/common';
 
-import { Environment } from './environment/environment';
+import { BaseEnvironment } from './environment/base-environment';
 
-@Module({
-  providers: [{ provide: Environment, useFactory: () => Environment.instance }],
-  exports: [Environment],
-})
-export class ApiCoreModule {}
+export interface ApiCoreForRootOptions {
+  environment: Type<BaseEnvironment>;
+}
+
+@Module({})
+export class ApiCoreModule {
+  static forRoot(options: ApiCoreForRootOptions): DynamicModule {
+    return {
+      module: ApiCoreModule,
+      exports: [options.environment],
+      providers: [
+        { provide: options.environment, useClass: options.environment },
+      ],
+    };
+  }
+}
